@@ -1,7 +1,39 @@
+const getData = (url = '') => {
+  return new Promise((resolve, reject) => {
+    fetch(url)
+      .then(r => {
+        r.text().then(data => resolve(data))
+      })
+  })
+}
+
+const writeData = (data) => {
+  console.log({data})
+  window.localStorage.setItem('farmyChallengeData', JSON.stringify(data))
+}
+
 const dataService = () => {
-  const data = {...initialData};
-  const resourceNames = Object.keys(data);
-  const actionNames = Object.keys(actions);
+  let data;
+  let resourceNames, actionNames;
+
+  const processResponse = (r) => {
+    data = JSON.parse(r);
+    resourceNames = data ? Object.keys(data) : [];
+    actionNames = data ? Object.keys(actions): [];
+
+    console.log({data, resourceNames, actionNames})
+  }
+
+  let storedData = window.localStorage.getItem('farmyChallengeData');
+
+  if (storedData)
+    processResponse(storedData);
+  else getData('data/savedData.json').then(r => {
+    if (r?.length)
+      processResponse(r);
+    else
+      getData('data/initialData.json').then(r => processResponse(r))
+  });
 
   const permissions = {
     business_logic: ['index'],
@@ -21,7 +53,7 @@ const dataService = () => {
 
       let [resource, id] = url.split('/');
       let dataPool = data[resource];
-      
+
       if (action === 'get')
         action = id ? 'show' : 'index';
       
@@ -39,7 +71,6 @@ const dataService = () => {
 
       if (response) {
         resolve(response);
-        return
       } else {
         reject(Error(hasAction ? 'Permission Denied' : 'Resource not found'))
       }
@@ -80,7 +111,25 @@ const dataService = () => {
     })
   }
 
-  return {get, create, delete: remove, update}
+  const saveData = (url = '', data) => {
+    const blob = new Blob([JSON.stringify(data)], { type: "text/json" });
+    const link = document.createElement("a");
+
+    link.download = url;
+    link.href = window.URL.createObjectURL(blob);
+    link.dataset.downloadurl = ["text/json", link.download, link.href].join(":");
+
+    const event = new MouseEvent("click", {
+      view: window,
+      bubbles: true,
+      cancelable: true,
+    });
+
+    link.dispatchEvent(event);
+    link.remove()
+  }
+
+  return {get, create, delete: remove, update, saveData}
 };
 
 const actions = {
@@ -93,305 +142,29 @@ const actions = {
   delete: ({dataPool, id, resource, data}) => {
     dataPool = dataPool.filter(i => i.id != id);
     data[resource] = dataPool;
+    writeData(data);
     return dataPool
   },
-  create: ({dataPool, payload}) => {
+  create: ({dataPool, payload, resource, data}) => {
     let newId = Math.max(...dataPool.map(i => i.id)) + 1;
     let newItem = {...payload, ...{id: newId}};
     dataPool.push(newItem);
+    data[resource] = dataPool;
+    writeData(data);
     return newItem
   },
-  update: ({dataPool, id, payload}) => {
-    let item = dataPool.find(i => i.id == id);
-    if (item) {
-      item = {...item, ...payload}
+  update: ({dataPool, id, payload, resource, data}) => {
+    let item;
+    const itemIndex = dataPool.indexOf(dataPool.find(i => i.id == id));
+    if (~itemIndex) {
+      item = dataPool[itemIndex];
+      dataPool[itemIndex] = {...item, ...payload}
     }
 
+    data[resource] = dataPool;
+    writeData(data)
     return item
   }
-}
-
-const initialData = {
-  business_logic: {
-    margin: 0.2,
-  },
-  suppliers: [
-    {
-      id: 1,
-      name: "Brand new Veggies",
-      productsToOrder: []
-    },
-    {
-      id: 2,
-      name: "Fruits Marcel",
-      productsToOrder: []
-    },
-    {
-      id: 3,
-      name: "HypeMart",
-      productsToOrder: []
-    },
-    {
-      id: 4,
-      name: "DaShop",
-      productsToOrder: []
-    }
-  ],
-  products: [
-    {
-      id: 1,
-      name: 'Lettuce',
-      costPerServing: 0.3,
-      weightInGramsPerServing: 100,
-      supplierId: 1
-    },
-    {
-      id: 2,
-      name: 'Tomato',
-      costPerServing: 0.4,
-      weightInGramsPerServing: 100,
-      supplierId: 1
-    },
-    {
-      id: 3,
-      name: 'Cherry Tomato',
-      costPerServing: 0.5,
-      weightInGramsPerServing: 75,
-      supplierId: 1
-    },
-    {
-      id: 4,
-      name: 'Pasta',
-      costPerServing: 0.2,
-      weightInGramsPerServing: 100,
-      supplierId: 3
-    },
-    {
-      id: 5,
-      name: 'Cous-cous',
-      costPerServing: 0.25,
-      weightInGramsPerServing: 100,
-      supplierId: 3
-    },
-    {
-      id: 6,
-      name: 'Rice',
-      costPerServing: 0.25,
-      weightInGramsPerServing: 100,
-      supplierId: 3
-    },
-    {
-      id: 7,
-      name: 'Potato',
-      costPerServing: 0.2,
-      weightInGramsPerServing: 100,
-      supplierId: 2
-    },
-    {
-      id: 8,
-      name: 'Red Pepper',
-      costPerServing: 0.4,
-      weightInGramsPerServing: 50,
-      supplierId: 2
-    },
-    {
-      id: 9,
-      name: 'Green Pepper',
-      costPerServing: 0.35,
-      weightInGramsPerServing: 50,
-      supplierId: 1
-    },
-    {
-      id: 10,
-      name: 'Cucumber',
-      costPerServing: 0.34,
-      weightInGramsPerServing: 50,
-      supplierId: 2
-    },
-    {
-      id: 11,
-      name: 'Onion',
-      costPerServing: 0.3,
-      weightInGramsPerServing: 50,
-      supplierId: 1
-    },
-    {
-      id: 12,
-      name: 'Chive',
-      costPerServing: 0.65,
-      weightInGramsPerServing: 35,
-      supplierId: 2
-    },
-    {
-      id: 13,
-      name: 'Pea',
-      costPerServing: 0.65,
-      weightInGramsPerServing: 50,
-      supplierId: 2
-    },
-    {
-      id: 14,
-      name: 'Pickle',
-      costPerServing: 0.4,
-      weightInGramsPerServing: 35,
-      supplierId: 3
-    },
-    {
-      id: 15,
-      name: 'Carrot',
-      costPerServing: 0.35,
-      weightInGramsPerServing: 75,
-      supplierId: 1
-    },
-    {
-      id: 16,
-      name: 'Cellery',
-      costPerServing: 0.75,
-      weightInGramsPerServing: 50,
-      supplierId: 1
-    },
-    {
-      id: 17,
-      name: 'Corn',
-      costPerServing: 0.3,
-      weightInGramsPerServing: 50,
-      supplierId: 4
-    },
-    {
-      id: 18,
-      name: 'Beet',
-      costPerServing: 0.4,
-      weightInGramsPerServing: 30,
-      supplierId: 2
-    },
-    {
-      id: 19,
-      name: 'Olives',
-      costPerServing: 0.6,
-      weightInGramsPerServing: 45,
-      supplierId: 4
-    },
-    {
-      id: 20,
-      name: 'Egg',
-      costPerServing: 0.7,
-      weightInGramsPerServing: 50,
-      supplierId: 4
-    },
-    {
-      id: 21,
-      name: 'Tuna',
-      costPerServing: 0.6,
-      weightInGramsPerServing: 45,
-      supplierId: 4
-    },{
-      id: 22,
-      name: 'Smoked Salmon',
-      costPerServing: 1.1,
-      weightInGramsPerServing: 35,
-      supplierId: 4
-    },{
-      id: 23,
-      name: 'Chicken',
-      costPerServing: 0.8,
-      weightInGramsPerServing: 100,
-      supplierId: 4
-    },{
-      id: 24,
-      name: 'Feta Cheese',
-      costPerServing: 0.85,
-      weightInGramsPerServing: 45,
-      supplierId: 3
-    },{
-      id: 25,
-      name: 'Crunchy Onion',
-      costPerServing: 0.5,
-      weightInGramsPerServing: 25,
-      supplierId: 3
-    },{
-      id: 26,
-      name: 'Crunchy Bacon',
-      costPerServing: 0.65,
-      weightInGramsPerServing: 25,
-      supplierId: 3
-    },{
-      id: 27,
-      name: 'Apple',
-      costPerServing: 0.7,
-      weightInGramsPerServing: 75,
-      supplierId: 1
-    },{
-      id: 28,
-      name: 'Nuts',
-      costPerServing: 0.8,
-      weightInGramsPerServing: 35,
-      supplierId: 2
-    },{
-      id: 29,
-      name: 'Sesame Seeds',
-      costPerServing: 0.7,
-      weightInGramsPerServing: 25,
-      supplierId: 2
-    },
-    {
-      id: 30,
-      name: 'Sunflower Seeds',
-      costPerServing: 0.65,
-      weightInGramsPerServing: 25,
-      supplierId: 2
-    },
-    {
-      id: 31,
-      name: 'Oil and Vinegar',
-      costPerServing: 0.15,
-      weightInGramsPerServing: 25,
-      supplierId: 4
-    },
-    {
-      id: 32,
-      name: 'Caesar Sauce',
-      costPerServing: 0.1,
-      weightInGramsPerServing: 25,
-      supplierId: 4
-    },
-    {
-      id: 33,
-      name: 'Cocktail Sauce',
-      costPerServing: 0.1,
-      weightInGramsPerServing: 25,
-      supplierId: 4
-    },
-    {
-      id: 34,
-      name: 'Oriental Sauce',
-      costPerServing: 0.1,
-      weightInGramsPerServing: 25,
-      supplierId: 4
-    },
-    {
-      id: 35,
-      name: 'Curry Mayo',
-      costPerServing: 0.1,
-      weightInGramsPerServing: 25,
-      supplierId: 3
-    }
-  ],
-  salads: [
-    {
-      id: 0,
-      size: 'small',
-      ingredients: [
-        {
-          id: 1,
-          numOfServings: 1
-        }
-      ],
-      cost: 0.3,
-      targetStock: 20,
-      currentStock: 0,
-      price: 0.33
-    }
-  ]
 }
 
 export default dataService;
