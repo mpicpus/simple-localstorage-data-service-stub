@@ -1,0 +1,25 @@
+{
+  "name": "simple-localstorage-data-service-stub",
+  "version": "1.0.0",
+  "description": "REST-API-esque stub service for frontend experiments",
+  "main": "data-service.js",
+  "files": ["data"],
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mpicpus/simple-localstorage-data-service-stub.git"
+  },
+  "keywords": [
+    "stub",
+    "rest-api",
+    "javascript"
+  ],
+  "author": "mpicpus",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/mpicpus/simple-localstorage-data-service-stub/issues"
+  },
+  "homepage": "https://github.com/mpicpus/simple-localstorage-data-service-stub#readme"
+}
