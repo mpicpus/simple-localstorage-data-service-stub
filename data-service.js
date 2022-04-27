@@ -8,7 +8,6 @@ const getData = (url = '') => {
 }
 
 const writeData = (data) => {
-  console.log({data})
   window.localStorage.setItem('farmyChallengeData', JSON.stringify(data))
 }
 
@@ -20,20 +19,29 @@ const dataService = () => {
     data = JSON.parse(r);
     resourceNames = data ? Object.keys(data) : [];
     actionNames = data ? Object.keys(actions): [];
-
-    console.log({data, resourceNames, actionNames})
   }
 
-  let storedData = window.localStorage.getItem('farmyChallengeData');
+  const initData = () => {
+    return new Promise((resolve, reject) => {
+      let storedData = window.localStorage.getItem('farmyChallengeData');
 
-  if (storedData)
-    processResponse(storedData);
-  else getData('data/savedData.json').then(r => {
-    if (r?.length)
-      processResponse(r);
-    else
-      getData('data/initialData.json').then(r => processResponse(r))
-  });
+      if (storedData) {
+        processResponse(storedData);
+        resolve(storedData);
+      }
+      else getData('data/savedData.json').then(r => {
+        if (r?.length) {
+          processResponse(r);
+          resolve(r);
+        }
+        else
+          getData('data/initialData.json').then(r => {
+            processResponse(r);
+            resolve(r);
+          })
+      }).catch(e => console.error(e));
+    })
+  }
 
   const permissions = {
     business_logic: ['index'],
@@ -51,28 +59,30 @@ const dataService = () => {
         return;
       }
 
-      let [resource, id] = url.split('/');
-      let dataPool = data[resource];
+      if (data) {
+        let [resource, id] = url.split('/');
+        let dataPool = data[resource];
 
-      if (action === 'get')
-        action = id ? 'show' : 'index';
-      
-      console.log({resource, id, action, dataPool, payload, data});
+        if (action === 'get')
+          action = id ? 'show' : 'index';
 
-      if (!dataPool) {
-        reject(Error('Resource not found'));
-        return;
-      }
-      
-      let hasAction = !!actions[action];
-      let response = hasAction && hasPermission(resource, action) ?
-                      actions[action]({dataPool, resource, id, payload, data}) :
-                      null;
+        if (!dataPool) {
+          reject(Error('Resource not found'));
+          return;
+        }
 
-      if (response) {
-        resolve(response);
+        let hasAction = !!actions[action];
+        let response = hasAction && hasPermission(resource, action) ?
+          actions[action]({dataPool, resource, id, payload, data}) :
+          null;
+
+        if (response) {
+          resolve(response);
+        } else {
+          reject(Error(hasAction ? 'Permission Denied' : 'Resource not found'))
+        }
       } else {
-        reject(Error(hasAction ? 'Permission Denied' : 'Resource not found'))
+        initData().then(r => route({url, action, payload}))
       }
     })
   }

@@ -3,9 +3,6 @@
   "version": "1.0.1",
   "description": "REST-API-esque stub service for frontend experiments",
   "main": "data-service.js",
-  "files": [
-    "data"
-  ],
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
