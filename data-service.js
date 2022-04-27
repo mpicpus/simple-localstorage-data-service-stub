@@ -16,9 +16,16 @@ const dataService = () => {
   let resourceNames, actionNames;
 
   const processResponse = (r) => {
-    data = JSON.parse(r);
-    resourceNames = data ? Object.keys(data) : [];
-    actionNames = data ? Object.keys(actions): [];
+    return new Promise((resolve, reject) => {
+      try{
+        data = JSON.parse(r);
+        resourceNames = data ? Object.keys(data) : [];
+        actionNames = data ? Object.keys(actions): [];
+        resolve(data)
+      } catch (error) {
+        reject(error)
+      }
+    })
   }
 
   const initData = () => {
@@ -82,7 +89,7 @@ const dataService = () => {
           reject(Error(hasAction ? 'Permission Denied' : 'Resource not found'))
         }
       } else {
-        initData().then(r => route({url, action, payload}))
+        initData().then(r => route({url, action, payload}).then(rr => resolve(rr)))
       }
     })
   }
@@ -121,29 +128,56 @@ const dataService = () => {
     })
   }
 
-  const saveData = (url = '', data) => {
-    const blob = new Blob([JSON.stringify(data)], { type: "text/json" });
-    const link = document.createElement("a");
+  const saveData = (url = 'savedData.json', data) => {
+    return new Promise((resolve, reject) => {
+      if (data) {
+        const blob = new Blob([JSON.stringify(data)], { type: "text/json" });
+        const link = document.createElement("a");
 
-    link.download = url;
-    link.href = window.URL.createObjectURL(blob);
-    link.dataset.downloadurl = ["text/json", link.download, link.href].join(":");
+        link.download = url;
+        link.href = window.URL.createObjectURL(blob);
+        link.dataset.downloadurl = ["text/json", link.download, link.href].join(":");
 
-    const event = new MouseEvent("click", {
-      view: window,
-      bubbles: true,
-      cancelable: true,
-    });
+        const event = new MouseEvent("click", {
+          view: window,
+          bubbles: true,
+          cancelable: true,
+        });
 
-    link.dispatchEvent(event);
-    link.remove()
+        link.dispatchEvent(event);
+        link.remove();
+        resolve()
+      } else {
+        initData().then((data) => saveData(url, data).then(() => resolve()))
+      }
+    })
   }
 
-  return {get, create, delete: remove, update, saveData}
+  const uploadFileInput = (event) => {
+    return new Promise((resolve, reject) => {
+      let files = event?.target?.files;
+      let file = files ? files[0] : null;
+
+      if (!file) {
+        reject("No file passed to the function.");
+        return
+      }
+
+      try {
+        file.text().then(data => {
+          processResponse(data).then(r => resolve(r)).catch(e => reject(e))
+        });
+      } catch (error) {
+        reject(error)
+      }
+    })
+  }
+
+  return {get, create, delete: remove, update, saveData, uploadFileInput}
 };
 
 const actions = {
-  index: ({dataPool, id, resource, data}) => {
+  index: ({dataPool}) => {
     return dataPool
   },
   show: ({dataPool, id}) => {
