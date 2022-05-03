@@ -8,12 +8,11 @@ const getData = (url = '') => {
 }
 
 const writeData = (data) => {
-  window.localStorage.setItem('farmyChallengeData', JSON.stringify(data))
+  window.localStorage.setItem('farmyChallengeData1', JSON.stringify(data))
 }
 
-const dataService = () => {
-  let data;
-  let resourceNames, actionNames;
+const dataService = ({initialDataFile = 'data/initialData.json', savedDataFile = null, flush: flushStorage = false}) => {
+  let data, resourceNames, actionNames, permissions;
 
   const processResponse = (r) => {
     return new Promise((resolve, reject) => {
@@ -29,33 +28,34 @@ const dataService = () => {
   }
 
   const initData = () => {
+    console.log("initData");
     return new Promise((resolve, reject) => {
-      let storedData = window.localStorage.getItem('farmyChallengeData');
+      let storedData = flushStorage ? null : window.localStorage.getItem('farmyChallengeData');
 
       if (storedData) {
-        processResponse(storedData);
-        resolve(storedData);
-      }
-      else getData('data/savedData.json').then(r => {
-        if (r?.length) {
-          processResponse(r);
-          resolve(r);
-        }
-        else
-          getData('data/initialData.json').then(r => {
-            processResponse(r);
+        processResponse(storedData).then(processedData => resolve(processedData));
+      } else if (savedDataFile) {
+        getData(savedDataFile).then(r => {
+          if (r?.length) {
+            processResponse(r).then(processedData => {
+              writeData(processedData);
+              resolve(processedData)
+            });
             resolve(r);
-          })
-      }).catch(e => console.error(e));
+          }
+        }).catch(e => console.error(e))
+      } else {
+        getData(initialDataFile).then(r => {
+          processResponse(r).then(processedData => {
+            writeData(processedData);
+            resolve(processedData)
+          });
+        })
+      }
     })
   }
 
-  const permissions = {
-    business_logic: ['index'],
-    suppliers: ['show', 'index'],
-    products: ['show', 'index'],
-    salads: ['show', 'index', 'delete', 'update', 'create']
-  }
+  initData().then(() => {});
 
   const hasPermission = (resource, action) => permissions[resource]?.includes(action) || false;
 
