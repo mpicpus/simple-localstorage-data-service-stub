@@ -11,7 +11,7 @@ const writeData = (data) => {
   window.localStorage.setItem('farmyChallengeData1', JSON.stringify(data))
 }
 
-const dataService = ({initialDataFile = 'data/initialData.json', savedDataFile = null, flush: flushStorage = false}) => {
+const dataService = ({initialDataFile = 'data/initialData.json', savedDataFile = null, flushStorage = false}) => {
   let data, resourceNames, actionNames, permissions;
 
   const processResponse = (r) => {
