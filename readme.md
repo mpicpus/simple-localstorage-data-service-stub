@@ -13,7 +13,7 @@ npm i simple-localstorage-data-service-stub
 ```
 or in your `package.json`:
 ```json
-"simple-localstorage-data-service-stub": "^1.0.5"
+"simple-localstorage-data-service-stub": "^1.0.7"
 ```
 
 
