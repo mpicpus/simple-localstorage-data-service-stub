@@ -11,15 +11,20 @@ const writeData = (data) => {
   window.localStorage.setItem('farmyChallengeData1', JSON.stringify(data))
 }
 
-const dataService = ({initialDataFile = 'data/initialData.json', savedDataFile = null, flushStorage = false}) => {
+const dataService = (
+  {
+    initialDataFile = 'data/initialData.json',
+    savedDataFile = null,
+    flushStorage = false
+  } = {}) => {
   let data, resourceNames, actionNames, permissions;
 
   const processResponse = (r) => {
     return new Promise((resolve, reject) => {
-      try{
+      try {
         data = JSON.parse(r);
         resourceNames = data ? Object.keys(data) : [];
-        actionNames = data ? Object.keys(actions): [];
+        actionNames = data ? Object.keys(actions) : [];
         resolve(data)
       } catch (error) {
         reject(error)
@@ -55,7 +60,8 @@ const dataService = ({initialDataFile = 'data/initialData.json', savedDataFile =
     })
   }
 
-  initData().then(() => {});
+  initData().then(() => {
+  });
 
   const hasPermission = (resource, action) => permissions[resource]?.includes(action) || false;
 
@@ -131,7 +137,7 @@ const dataService = ({initialDataFile = 'data/initialData.json', savedDataFile =
   const saveData = (url = 'savedData.json', data = null) => {
     return new Promise((resolve, reject) => {
       if (data) {
-        const blob = new Blob([JSON.stringify(data)], { type: "text/json" });
+        const blob = new Blob([JSON.stringify(data)], {type: "text/json"});
         const link = document.createElement("a");
 
         link.download = url;
