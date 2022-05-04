@@ -3,7 +3,7 @@ This small tool is intended to be used for simple frontend coding challenges/exp
 
 The following documentation is based on the dataset that can be found [here](https://github.com/mpicpus/challenge-data-set-1), but the tool intends to be a bit more flexible than that.
 
-Initial data is read from a `initialData.json` file by default. This can be configured, but for convenience just place the above data set in a /data public folder.
+Initial data is read from a `data/initialData.json` file by default. This can be configured, but for convenience just place the above data set in a /data public folder.
 
 **Important note**: This is a work in progress, some bugs may still arise. If so please report them and we'll try to solve them as soon as possible. Suggestions and PRs are welcome.
 
