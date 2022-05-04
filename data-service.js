@@ -128,7 +128,7 @@ const dataService = ({initialDataFile = 'data/initialData.json', savedDataFile =
     })
   }
 
-  const saveData = (url = 'savedData.json', data) => {
+  const saveData = (url = 'savedData.json', data = null) => {
     return new Promise((resolve, reject) => {
       if (data) {
         const blob = new Blob([JSON.stringify(data)], { type: "text/json" });
