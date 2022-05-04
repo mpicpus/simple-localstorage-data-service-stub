@@ -1,6 +1,6 @@
 {
   "name": "simple-localstorage-data-service-stub",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "REST-API-esque stub service for frontend experiments",
   "main": "data-service.js",
   "scripts": {
