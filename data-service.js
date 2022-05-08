@@ -60,7 +60,8 @@ const dataService = (
     })
   }
 
-  initData().then(() => {
+  initData().then((data) => {
+    permissions = data?.apiSettings?.permissions || {};
   });
 
   const hasPermission = (resource, action) => permissions[resource]?.includes(action) || false;
